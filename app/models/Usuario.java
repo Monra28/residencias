@@ -4,16 +4,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import javax.persistence.*;
+import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.DecimalMin;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "platillos")
+@Table(name = "usuarios")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Platillo {
+public class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,23 +23,27 @@ public class Platillo {
     private String nombre;
 
     @NotNull
+    @Email
+    @Column(length = 150, nullable = false, unique = true)
+    private String email;
+
+    @NotNull
+    @Column(length = 255, nullable = false)
+    private String password;
+
+    @NotNull
     @Column(length = 50, nullable = false)
-    private String categoria;
+    private String rol = "USUARIO";
+
+    @Column(length = 20)
+    private String telefono;
 
     @Column(columnDefinition = "TEXT")
-    private String descripcion;
-
-    @NotNull
-    @DecimalMin("0.01")
-    @Column(nullable = false)
-    private BigDecimal precio;
-
-    @Column(length = 255)
-    private String imagenUrl;
+    private String direccion;
 
     @NotNull
     @Column(nullable = false)
-    private Boolean disponible = true;
+    private Boolean activo = true;
 
     @Column(name = "fecha_creacion")
     private LocalDateTime fechaCreacion;
@@ -49,19 +52,27 @@ public class Platillo {
     private LocalDateTime fechaModificacion;
 
     // Constructores
-    public Platillo() {
+    public Usuario() {
         this.fechaCreacion = LocalDateTime.now();
         this.fechaModificacion = LocalDateTime.now();
     }
 
-    public Platillo(String nombre, String categoria, String descripcion, BigDecimal precio, String imagenUrl, Boolean disponible) {
+    public Usuario(String nombre, String email, String password, String rol) {
         this();
         this.nombre = nombre;
-        this.categoria = categoria;
-        this.descripcion = descripcion;
-        this.precio = precio;
-        this.imagenUrl = imagenUrl;
-        this.disponible = disponible;
+        this.email = email;
+        this.password = password;
+        this.rol = rol;
+    }
+
+    public Usuario(String nombre, String email, String password, String rol, String telefono, String direccion) {
+        this();
+        this.nombre = nombre;
+        this.email = email;
+        this.password = password;
+        this.rol = rol;
+        this.telefono = telefono;
+        this.direccion = direccion;
     }
 
     // Getters y Setters
@@ -81,44 +92,52 @@ public class Platillo {
         this.nombre = nombre;
     }
 
-    public String getCategoria() {
-        return categoria;
+    public String getEmail() {
+        return email;
     }
 
-    public void setCategoria(String categoria) {
-        this.categoria = categoria;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
-    public String getDescripcion() {
-        return descripcion;
+    public String getPassword() {
+        return password;
     }
 
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
+    public void setPassword(String password) {
+        this.password = password;
     }
 
-    public BigDecimal getPrecio() {
-        return precio;
+    public String getRol() {
+        return rol;
     }
 
-    public void setPrecio(BigDecimal precio) {
-        this.precio = precio;
+    public void setRol(String rol) {
+        this.rol = rol;
     }
 
-    public String getImagenUrl() {
-        return imagenUrl;
+    public String getTelefono() {
+        return telefono;
     }
 
-    public void setImagenUrl(String imagenUrl) {
-        this.imagenUrl = imagenUrl;
+    public void setTelefono(String telefono) {
+        this.telefono = telefono;
     }
 
-    public Boolean getDisponible() {
-        return disponible;
+    public String getDireccion() {
+        return direccion;
     }
 
-    public void setDisponible(Boolean disponible) {
-        this.disponible = disponible;
+    public void setDireccion(String direccion) {
+        this.direccion = direccion;
+    }
+
+    public Boolean getActivo() {
+        return activo;
+    }
+
+    public void setActivo(Boolean activo) {
+        this.activo = activo;
     }
 
     public LocalDateTime getFechaCreacion() {
@@ -144,14 +163,13 @@ public class Platillo {
 
     @Override
     public String toString() {
-        return "Platillo{" +
+        return "Usuario{" +
                 "id=" + id +
                 ", nombre='" + nombre + '\'' +
-                ", categoria='" + categoria + '\'' +
-                ", descripcion='" + descripcion + '\'' +
-                ", precio=" + precio +
-                ", imagenUrl='" + imagenUrl + '\'' +
-                ", disponible=" + disponible +
+                ", email='" + email + '\'' +
+                ", rol='" + rol + '\'' +
+                ", telefono='" + telefono + '\'' +
+                ", activo=" + activo +
                 ", fechaCreacion=" + fechaCreacion +
                 ", fechaModificacion=" + fechaModificacion +
                 '}';

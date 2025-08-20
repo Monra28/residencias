@@ -6,8 +6,11 @@
 # An example controller showing a sample home page
 GET     /                           controllers.PlatilloController.listar()
 
-# Test route
-GET     /test                       controllers.TestController.index()
+# Test routes para verificar base de datos
+GET     /test/database              controllers.TestController.testDatabase()
+GET     /test/usuarios              controllers.TestController.testUsuarios()
+GET     /test/categorias            controllers.TestController.testCategorias()
+GET     /test/platillos             controllers.TestController.testPlatillos()
 
 # CRUD Platillos
 GET     /platillos              controllers.PlatilloController.listar()
@@ -22,6 +25,16 @@ GET     /categorias/:id         controllers.Categoriacontorller.obtener(id: Long
 POST    /categorias             controllers.Categoriacontorller.crear(request: Request)
 PUT     /categorias/:id         controllers.Categoriacontorller.actualizar(id: Long, request: Request)
 DELETE  /categorias/:id         controllers.Categoriacontorller.eliminar(id: Long)
+
+# CRUD Usuarios
+GET     /usuarios               controllers.UsuarioController.listar()
+GET     /usuarios/:id           controllers.UsuarioController.obtener(id: Long)
+POST    /usuarios               controllers.UsuarioController.crear(request: Request)
+PUT     /usuarios/:id           controllers.UsuarioController.actualizar(id: Long, request: Request)
+DELETE  /usuarios/:id           controllers.UsuarioController.eliminar(id: Long)
+GET     /usuarios/vista         controllers.UsuarioController.vistaUsuarios()
+GET     /usuarios/buscar/:email controllers.UsuarioController.buscarPorEmail(email: String)
+PUT     /usuarios/:id/estado    controllers.UsuarioController.cambiarEstado(id: Long)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

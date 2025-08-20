@@ -15,7 +15,14 @@ public class HomeController extends Controller {
      * <code>GET</code> request with a path of <code>/</code>.
      */
     public Result index() {
-        return ok(views.html.index.render());
+        try {
+            // Temporalmente usar datos estáticos hasta resolver el problema de base de datos
+            return ok(views.html.index.render(null, null, null, 0L, 0L, 0L));
+            
+        } catch (Exception e) {
+            // Si hay error, mostrar página sin datos
+            return ok(views.html.index.render(null, null, null, 0L, 0L, 0L));
+        }
     }
 
 }

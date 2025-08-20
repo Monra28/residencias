@@ -2,9 +2,6 @@ package models;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.ebean.Model;
-import io.ebean.annotation.WhenCreated;
-import io.ebean.annotation.WhenModified;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -14,7 +11,7 @@ import java.time.LocalDateTime;
 @Table(name = "categorias")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Categoria extends Model {
+public class Categoria {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,21 +28,22 @@ public class Categoria extends Model {
     @Column(nullable = false)
     private Boolean activa = true;
 
-    @WhenCreated
+    @Column(name = "fecha_creacion")
     private LocalDateTime fechaCreacion;
 
-    @WhenModified
+    @Column(name = "fecha_modificacion")
     private LocalDateTime fechaModificacion;
 
-    // Constructor por defecto
+    // Constructores
     public Categoria() {
+        this.fechaCreacion = LocalDateTime.now();
+        this.fechaModificacion = LocalDateTime.now();
     }
 
-    // Constructor con parámetros
-    public Categoria(String nombre, String descripcion, Boolean activa) {
+    public Categoria(String nombre, String descripcion) {
+        this();
         this.nombre = nombre;
         this.descripcion = descripcion;
-        this.activa = activa;
     }
 
     // Getters y Setters
@@ -95,6 +93,11 @@ public class Categoria extends Model {
 
     public void setFechaModificacion(LocalDateTime fechaModificacion) {
         this.fechaModificacion = fechaModificacion;
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.fechaModificacion = LocalDateTime.now();
     }
 
     @Override

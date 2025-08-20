@@ -1,5 +1,4 @@
-@()
-
+@(platillos: List[models.Platillo], categorias: List[models.Categoria])
 <!DOCTYPE html>
 <html>
 <head>
@@ -12,11 +11,13 @@
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header bg-primary text-white text-center">
-                        <h2>Gestión de Platillos</h2>
+                        <h2>🍽️ Gestión de Platillos</h2>
                         <p>Sistema de administración de menú del restaurante</p>
                     </div>
                     <div class="card-body">
-                        <form id="platilloForm">
+                        <form id="platilloForm" method="POST" action="/platillos">
+                            <input type="hidden" id="editId" name="editId">
+                            <input type="hidden" id="editMode" name="editMode" value="false">
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label for="nombre" class="form-label">Nombre del Platillo</label>
@@ -26,11 +27,11 @@
                                     <label for="categoria" class="form-label">Categoría</label>
                                     <select class="form-control" id="categoria" name="categoria" required>
                                         <option value="">Seleccione una categoría</option>
-                                        <option value="Entradas">Entradas</option>
-                                        <option value="Platos Principales">Platos Principales</option>
-                                        <option value="Postres">Postres</option>
-                                        <option value="Bebidas">Bebidas</option>
-                                        <option value="Especialidades">Especialidades</option>
+                                        @if(categorias != null) {
+                                            @for(categoria <- categorias) {
+                                                <option value="@categoria.getNombre()">@categoria.getNombre()</option>
+                                            }
+                                        }
                                     </select>
                                 </div>
                             </div>
@@ -63,18 +64,54 @@
                             
                             <div class="d-flex justify-content-end">
                                 <button type="button" class="btn btn-secondary me-2" onclick="limpiarFormulario()">Limpiar</button>
-                                <button type="submit" class="btn btn-success">Guardar Platillo</button>
+                                <button type="button" class="btn btn-warning me-2" id="cancelarEdicion" onclick="cancelarEdicion()" style="display: none;">Cancelar</button>
+                                <button type="submit" class="btn btn-success" id="btnGuardar">Guardar Platillo</button>
                             </div>
                         </form>
                         
                         <hr class="my-4">
                         
                         <div class="text-center">
-                            <h4>Platillos Registrados</h4>
+                            <h4>🍴 Platillos Registrados en la Base de Datos</h4>
                             <div id="listaPlatillos">
-                                <div class="alert alert-info">
-                                    No hay platillos registrados aún. ¡Agrega el primero!
-                                </div>
+                                @if(platillos != null && !platillos.isEmpty()) {
+                                    @for(platillo <- platillos) {
+                                        <div class="card mb-3">
+                                            <div class="card-body">
+                                                <div class="row align-items-center">
+                                                    <div class="col-md-8">
+                                                        <h5 class="card-title">@platillo.getNombre()</h5>
+                                                        <p class="card-text text-muted">
+                                                            <span class="badge bg-primary">@platillo.getCategoria()</span>
+                                                        </p>
+                                                        <p class="card-text">@platillo.getDescripcion()</p>
+                                                        @if(platillo.getImagenUrl() != null && !platillo.getImagenUrl().isEmpty()) {
+                                                            <small class="text-muted">Imagen: @platillo.getImagenUrl()</small>
+                                                        }
+                                                    </div>
+                                                    <div class="col-md-4 text-end">
+                                                        <span class="badge bg-success fs-6">$$@platillo.getPrecio()</span>
+                                                        @if(platillo.getDisponible()) {
+                                                            <span class="badge bg-success ms-1">Disponible</span>
+                                                        } else {
+                                                            <span class="badge bg-danger ms-1">No disponible</span>
+                                                        }
+                                                        <div class="mt-2">
+                                                            <a href="/platillos/@platillo.getId()" class="btn btn-info btn-sm me-1">Ver</a>
+                                                            <button class="btn btn-warning btn-sm me-1" onclick="editarPlatillo(@platillo.getId())">Editar</button>
+                                                            <button class="btn btn-danger btn-sm" onclick="eliminarPlatillo(@platillo.getId())">Eliminar</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                } else {
+                                    <div class="alert alert-info">
+                                        <h5>📝 No hay platillos registrados en la base de datos</h5>
+                                        <p>¡Agrega el primer platillo usando el formulario de arriba!</p>
+                                    </div>
+                                }
                             </div>
                         </div>
                     </div>
@@ -83,61 +120,136 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.getElementById('platilloForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const platillo = {
-                nombre: formData.get('nombre'),
-                categoria: formData.get('categoria'),
-                descripcion: formData.get('descripcion'),
-                precio: parseFloat(formData.get('precio')),
-                imagenUrl: formData.get('imagenUrl'),
-                disponible: formData.get('disponible') === 'on'
-            };
-            
-            console.log('Platillo a guardar:', platillo);
-            alert('¡Platillo guardado exitosamente!');
-            
-            agregarPlatilloALista(platillo);
-            this.reset();
-        });
-        
         function limpiarFormulario() {
             document.getElementById('platilloForm').reset();
+            document.getElementById('editId').value = '';
+            document.getElementById('editMode').value = 'false';
+            document.getElementById('btnGuardar').textContent = 'Guardar Platillo';
+            document.getElementById('cancelarEdicion').style.display = 'none';
+            document.getElementById('platilloForm').action = '/platillos';
         }
         
-        function agregarPlatilloALista(platillo) {
-            const lista = document.getElementById('listaPlatillos');
-            
-            if (lista.querySelector('.alert-info')) {
-                lista.innerHTML = '';
-            }
-            
-            const platilloHtml = `
-                <div class="card mb-2">
-                    <div class="card-body">
-                        <div class="row align-items-center">
-                            <div class="col-md-8">
-                                <h6 class="card-title">${platillo.nombre}</h6>
-                                <p class="card-text text-muted">${platillo.categoria}</p>
-                                <p class="card-text">${platillo.descripcion || 'Sin descripción'}</p>
-                            </div>
-                            <div class="col-md-4 text-end">
-                                <span class="badge bg-success fs-6">$${platillo.precio.toFixed(2)}</span>
-                                <span class="badge ${platillo.disponible ? 'bg-success' : 'bg-danger'} ms-1">
-                                    ${platillo.disponible ? 'Disponible' : 'No disponible'}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            lista.innerHTML += platilloHtml;
+        function cancelarEdicion() {
+            limpiarFormulario();
         }
+        
+        function editarPlatillo(id) {
+            // Buscar los datos del platillo en la página actual
+            const platilloCards = document.querySelectorAll('.card');
+            let platilloData = null;
+            
+            platilloCards.forEach(card => {
+                const editButton = card.querySelector(`button[onclick="editarPlatillo(${id})"]`);
+                if (editButton) {
+                    // Extraer datos del platillo de la card
+                    const nombre = card.querySelector('.card-title').textContent;
+                    const categoria = card.querySelector('.badge.bg-primary').textContent;
+                    const descripcion = card.querySelector('.card-text:not(.text-muted)').textContent;
+                    const precioText = card.querySelector('.badge.bg-success').textContent;
+                    const precio = precioText.replace('$', '');
+                    const disponible = card.querySelector('.badge.bg-success.ms-1') !== null;
+                    const imagenElement = card.querySelector('small.text-muted');
+                    const imagen = imagenElement ? imagenElement.textContent.replace('Imagen: ', '') : '';
+                    
+                    platilloData = {
+                        id: id,
+                        nombre: nombre,
+                        categoria: categoria,
+                        descripcion: descripcion,
+                        precio: precio,
+                        imagen: imagen,
+                        disponible: disponible
+                    };
+                }
+            });
+            
+            if (platilloData) {
+                // Cargar datos en el formulario
+                document.getElementById('editId').value = platilloData.id;
+                document.getElementById('editMode').value = 'true';
+                document.getElementById('nombre').value = platilloData.nombre;
+                document.getElementById('categoria').value = platilloData.categoria;
+                document.getElementById('descripcion').value = platilloData.descripcion;
+                document.getElementById('precio').value = platilloData.precio;
+                document.getElementById('imagenUrl').value = platilloData.imagen;
+                document.getElementById('disponible').checked = platilloData.disponible;
+                
+                // Cambiar el comportamiento del formulario
+                document.getElementById('btnGuardar').textContent = 'Actualizar Platillo';
+                document.getElementById('cancelarEdicion').style.display = 'inline-block';
+                document.getElementById('platilloForm').action = '/platillos/' + id;
+                
+                // Scroll hacia el formulario
+                document.getElementById('platilloForm').scrollIntoView({ behavior: 'smooth' });
+            } else {
+                alert('Error al cargar datos del platillo');
+            }
+        }
+        
+        function eliminarPlatillo(id) {
+            if (confirm('¿Seguro que quieres eliminar este platillo?')) {
+                // Usar fetch para enviar petición DELETE
+                fetch('/platillos/' + id, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Platillo eliminado correctamente');
+                        location.reload(); // Recargar la página
+                    } else {
+                        alert('Error al eliminar el platillo');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al eliminar el platillo');
+                });
+            }
+        }
+        
+        // Manejar el envío del formulario para edición
+        document.getElementById('platilloForm').addEventListener('submit', function(e) {
+            const editMode = document.getElementById('editMode').value;
+            const editId = document.getElementById('editId').value;
+            
+            if (editMode === 'true' && editId) {
+                e.preventDefault();
+                
+                // Recopilar datos del formulario
+                const formData = new FormData(this);
+                const data = {};
+                formData.forEach((value, key) => {
+                    if (key !== 'editId' && key !== 'editMode') {
+                        data[key] = value;
+                    }
+                });
+                
+                // Enviar petición PUT para actualizar
+                fetch('/platillos/' + editId, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(data)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Platillo actualizado correctamente');
+                        location.reload();
+                    } else {
+                        alert('Error al actualizar el platillo');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al actualizar el platillo');
+                });
+            }
+        });
     </script>
 </body>
 </html>
