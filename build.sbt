@@ -11,6 +11,9 @@ scalaVersion := "2.13.16"
 libraryDependencies ++= Seq(
   guice,
   jdbc,
+  javaJpa,
+  javaForms,
+  javaJdbc,
   "com.fasterxml.jackson.core" % "jackson-databind" % "2.14.3",
   "com.h2database" % "h2" % "2.2.224",
   "javax.persistence" % "javax.persistence-api" % "2.2",
